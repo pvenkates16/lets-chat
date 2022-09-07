@@ -26,19 +26,22 @@ class Chat(chat_pb2_grpc.ChatServicer):
 
     def __init__(self):
         self.user_tokens = dict()
+        print("SERVER: Started chat server")
 
     def Login(self, request, context):
-        uid = uuid.uuid1()
+        uid = str(uuid.uuid1())
         self.user_tokens[uid] = request.name
-        print("Added user %s, token %s" % (self.user_tokens[uid], uid))
-        print(self.user_tokens)
+        print("SERVER: Added user %s, token %s" % (self.user_tokens[uid], uid))
+        print("SERVER: " + str(self.user_tokens))
         return chat_pb2.LoginResponse(token='%s' % uid)
 
     def Logout(self, request, context):
         uid = request.token
+        print("SERVER: Logging out" + uid)
         name = self.user_tokens[uid]
         del self.user_tokens[uid]    # remove token from our map
-        print("Byebye, %s, %s!" , uid, name)
+        print("SERVER: Byebye, %s, %s!" , uid, name)
+        return chat_pb2.LogoutResponse()
 
 
 
