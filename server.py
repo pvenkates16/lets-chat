@@ -11,28 +11,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""The Python implementation of the GRPC helloworld.Greeter server."""
+"""The Python implementation of the GRPC chat server."""
 
 from concurrent import futures
 import logging
 
 import grpc
-import helloworld_pb2
-import helloworld_pb2_grpc
+import chat_pb2
+import chat_pb2_grpc
+import uuid
 
 
-class Greeter(helloworld_pb2_grpc.GreeterServicer):
+class Chat(chat_pb2_grpc.ChatServicer):
 
-    def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello, %s!' % request.name)
+    def __init__(self):
+        self.user_tokens = dict()
 
-    def SayHelloAgain(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello again, %s!' % request.name)
+    def Login(self, request, context):
+        uid = uuid.uuid1()
+        self.user_tokens[uid] = request.name
+        print("Added user %s, token %s" % (self.user_tokens[uid], uid))
+        print(self.user_tokens)
+        return chat_pb2.LoginResponse(token='%s' % uid)
+
+    def Logout(self, request, context):
+        uid = request.token
+        name = self.user_tokens[uid]
+        del self.user_tokens[uid]    # remove token from our map
+        print("Byebye, %s, %s!" , uid, name)
+
 
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
+    chat_pb2_grpc.add_ChatServicer_to_server(Chat(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
